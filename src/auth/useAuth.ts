@@ -2,6 +2,26 @@ import { useEffect, useState } from 'react'
 import { exchangeCode, loadTokens } from '../auth/tokenStore'
 import { takeVerifier } from './pkce'
 
+/** Map Spotify OAuth error codes to short CRT-friendly messages. */
+export function formatAuthError(raw: string): string {
+  const key = raw.trim().toLowerCase().replaceAll(' ', '_')
+  switch (key) {
+    case 'access_denied':
+      return 'ACCESS DENIED'
+    case 'user_not_authorized':
+    case 'unauthorized_client':
+      return 'NOT ON ALLOWLIST — ADD EMAIL IN SPOTIFY DASHBOARD'
+    case 'invalid_client':
+      return 'BAD CLIENT ID'
+    case 'invalid_grant':
+      return 'LOGIN EXPIRED — CONNECT AGAIN'
+    case 'invalid_scope':
+      return 'SCOPE REJECTED'
+    default:
+      return raw.replaceAll('_', ' ').toUpperCase()
+  }
+}
+
 export function useAuth(clientId: string | undefined) {
   const [authed, setAuthed] = useState(() => Boolean(loadTokens()))
   const [callbackError, setCallbackError] = useState<string | null>(null)
@@ -28,7 +48,7 @@ export function useAuth(clientId: string | undefined) {
     }
 
     if (err) {
-      setCallbackError(err.replaceAll('_', ' ').toUpperCase())
+      setCallbackError(formatAuthError(err))
       finish()
       return
     }
@@ -43,8 +63,13 @@ export function useAuth(clientId: string | undefined) {
         setAuthed(true)
         finish()
       })
-      .catch(() => {
-        setCallbackError('TOKEN EXCHANGE FAILED')
+      .catch((e: unknown) => {
+        const msg = e instanceof Error ? e.message : ''
+        if (/not.?authorized|403|forbidden/i.test(msg)) {
+          setCallbackError(formatAuthError('user_not_authorized'))
+        } else {
+          setCallbackError('TOKEN EXCHANGE FAILED')
+        }
         finish()
       })
   }, [clientId])
