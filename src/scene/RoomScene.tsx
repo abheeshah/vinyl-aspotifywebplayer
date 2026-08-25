@@ -13,6 +13,8 @@ type Props = {
   scale: number
   fullscreen: boolean
   onFullscreen: () => void
+  postersVisible: boolean
+  onTogglePosters: () => void
   authed: boolean
   handlingCallback: boolean
   clientMissing: boolean
@@ -50,7 +52,7 @@ export function RoomScene(props: Props) {
           <div className="window__sky" />
           <div className="window__blinds" />
         </div>
-        <ArtistPosters artists={props.topArtists} />
+        {props.postersVisible ? <ArtistPosters artists={props.topArtists} /> : null}
         <LightBeams />
         <DustMotes quiet={quiet} />
         <div className="desk" />
@@ -79,14 +81,24 @@ export function RoomScene(props: Props) {
         />
         <Mug />
         <Turntable paused={props.paused} hasTrack={Boolean(props.track)} pixelArt={props.pixelArt} />
-        <button
-          type="button"
-          className="fs-btn"
-          onClick={props.onFullscreen}
-          aria-label={props.fullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
-        >
-          {props.fullscreen ? 'ESC' : 'FS'}
-        </button>
+        <div className="hud-btns">
+          <button
+            type="button"
+            className="fs-btn"
+            onClick={props.onTogglePosters}
+            aria-label={props.postersVisible ? 'Hide posters' : 'Show posters'}
+          >
+            {props.postersVisible ? 'PS' : 'OFF'}
+          </button>
+          <button
+            type="button"
+            className="fs-btn"
+            onClick={props.onFullscreen}
+            aria-label={props.fullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+          >
+            {props.fullscreen ? 'ESC' : 'FS'}
+          </button>
+        </div>
       </div>
     </div>
   )

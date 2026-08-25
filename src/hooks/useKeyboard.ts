@@ -1,7 +1,12 @@
 import { useEffect } from 'react'
 import type { PlayerModel } from '../spotify/useSpotifyPlayer'
 
-export function useKeyboard(player: PlayerModel, onFullscreen: () => void, enabled: boolean) {
+export function useKeyboard(
+  player: PlayerModel,
+  onFullscreen: () => void,
+  onTogglePosters: () => void,
+  enabled: boolean,
+) {
   useEffect(() => {
     if (!enabled) return
 
@@ -36,10 +41,15 @@ export function useKeyboard(player: PlayerModel, onFullscreen: () => void, enabl
       if (key === 'f') {
         e.preventDefault()
         onFullscreen()
+        return
+      }
+      if (key === 'p') {
+        e.preventDefault()
+        onTogglePosters()
       }
     }
 
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [enabled, onFullscreen, player])
+  }, [enabled, onFullscreen, onTogglePosters, player])
 }

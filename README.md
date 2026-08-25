@@ -10,7 +10,7 @@ Fullscreen 8-bit listening room for Spotify Premium — a beige CRT, a teak turn
 - Turntable that spins with playback; album art dithered onto the vinyl label
 - Speakers that pulse from Spotify audio analysis (falls back to a motion loop)
 - Wall posters of your short-term top 3 artists (last ~4 weeks)
-- Keyboard + on-screen controls; `F` for fullscreen immersion
+- Keyboard + on-screen controls; `F` for fullscreen, `P` / **PS** to hide wall posters
 - Spotify Authorization Code + PKCE — no client secret, tokens stay in the browser
 
 ## Prerequisites
@@ -93,6 +93,7 @@ If you pull updates that add scopes (e.g. wall posters / `user-top-read`), click
 | `↑` / `↓` | Volume |
 | `F` | Enter fullscreen |
 | `Esc` | Exit fullscreen |
+| `P` / **PS** | Toggle wall posters |
 | CRT buttons | Transport, seek, volume, NOW / Q tabs |
 
 ## Scripts

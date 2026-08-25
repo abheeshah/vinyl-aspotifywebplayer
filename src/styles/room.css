@@ -1457,11 +1457,18 @@ img {
   text-overflow: ellipsis;
 }
 
-.fs-btn {
+.hud-btns {
   position: absolute;
   top: 8px;
   right: 8px;
   z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: stretch;
+}
+
+.fs-btn {
   border: 0;
   background: var(--slate);
   color: var(--cream);

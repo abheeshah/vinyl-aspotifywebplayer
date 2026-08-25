@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { beginLogin } from './auth/pkce'
 import { useAuth } from './auth/useAuth'
 import { useFullscreen } from './hooks/useFullscreen'
@@ -16,19 +17,36 @@ const CLIENT_ID =
     ? RAW_CLIENT_ID.trim()
     : undefined
 
+const POSTERS_KEY = 'vinyl_posters'
+
+function readPostersVisible(): boolean {
+  const stored = localStorage.getItem(POSTERS_KEY)
+  if (stored === null) return true
+  return stored !== '0'
+}
+
 export default function App() {
   const scale = usePixelScale()
   const { active, toggle } = useFullscreen()
+  const [postersVisible, setPostersVisible] = useState(readPostersVisible)
   const { authed, callbackError, handlingCallback } = useAuth(CLIENT_ID)
   const player = useSpotifyPlayer(CLIENT_ID, authed && !handlingCallback)
 
-  useKeyboard(player, () => void toggle(), authed && player.ready)
+  useEffect(() => {
+    localStorage.setItem(POSTERS_KEY, postersVisible ? '1' : '0')
+  }, [postersVisible])
+
+  const togglePosters = () => setPostersVisible((v) => !v)
+
+  useKeyboard(player, () => void toggle(), togglePosters, authed && player.ready)
 
   return (
     <RoomScene
       scale={scale}
       fullscreen={active}
       onFullscreen={() => void toggle()}
+      postersVisible={postersVisible}
+      onTogglePosters={togglePosters}
       authed={authed}
       handlingCallback={handlingCallback}
       clientMissing={!CLIENT_ID}
