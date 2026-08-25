@@ -12,6 +12,12 @@ export type TopArtist = {
   imageUrl: string | null
 }
 
+export type PlaylistSummary = {
+  id: string
+  name: string
+  uri: string
+}
+
 export type AudioAnalysis = {
   beats: { start: number; duration: number }[]
   segments: {
@@ -57,6 +63,32 @@ export async function fetchQueue(token: string): Promise<QueueTrack[]> {
     name: t.name,
     artists: t.artists.map((a) => a.name).join(', '),
   }))
+}
+
+type PlaylistPage = {
+  items?: ({ id: string; name: string; uri: string } | null)[]
+  next: string | null
+}
+
+export async function fetchUserPlaylists(token: string): Promise<PlaylistSummary[]> {
+  const out: PlaylistSummary[] = []
+  let path: string | null = '/me/playlists?limit=50'
+  // Spotify caps page size at 50; walk `next` until the library is exhausted.
+  while (path) {
+    const page: PlaylistPage = await api<PlaylistPage>(token, path)
+    for (const item of page.items ?? []) {
+      if (item?.uri) out.push({ id: item.id, name: item.name, uri: item.uri })
+    }
+    path = page.next ? page.next.replace('https://api.spotify.com/v1', '') : null
+  }
+  return out
+}
+
+export async function playContext(token: string, deviceId: string, contextUri: string): Promise<void> {
+  await api(token, `/me/player/play?device_id=${encodeURIComponent(deviceId)}`, {
+    method: 'PUT',
+    body: JSON.stringify({ context_uri: contextUri }),
+  })
 }
 
 export async function fetchTopArtists(token: string): Promise<TopArtist[]> {

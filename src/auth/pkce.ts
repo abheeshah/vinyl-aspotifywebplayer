@@ -7,6 +7,8 @@ const SCOPES = [
   'user-modify-playback-state',
   'user-read-currently-playing',
   'user-top-read',
+  'playlist-read-private',
+  'playlist-read-collaborative',
 ].join(' ')
 
 /** Spotify rejects `localhost`; loopback must be an IP literal (http://127.0.0.1:PORT). */

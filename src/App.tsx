@@ -70,6 +70,8 @@ export default function App() {
       onNext={player.next}
       onSeek={player.seek}
       onVolume={player.setVolume}
+      onLoadPlaylists={player.loadPlaylists}
+      onPlayPlaylist={player.playPlaylist}
     />
   )
 }

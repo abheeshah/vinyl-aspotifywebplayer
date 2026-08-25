@@ -82,7 +82,7 @@ Unlimited / public Spotify users require Extended Quota Mode (organizations only
 
 ### Re-authorizing after scope changes
 
-If you pull updates that add scopes (e.g. wall posters / `user-top-read`), click **CONNECT** again so Spotify re-grants permissions. Old sessions are cleared when the token store version bumps.
+If you pull updates that add scopes (e.g. wall posters / `user-top-read`, playlist pins / `playlist-read-private` and `playlist-read-collaborative`), click **CONNECT** again so Spotify re-grants permissions. Old sessions are cleared when the token store version bumps.
 
 ## Controls
 
@@ -94,7 +94,9 @@ If you pull updates that add scopes (e.g. wall posters / `user-top-read`), click
 | `F` | Enter fullscreen |
 | `Esc` | Exit fullscreen |
 | `P` / **PS** | Toggle wall posters |
-| CRT buttons | Transport, seek, volume, NOW / Q tabs |
+| CRT buttons | Transport, seek, volume, NOW / Q / PL tabs |
+
+On the **PL** tab, five pinned playlists start playback on **Vinyl Player**. Press **SET** to scroll your full library and assign or clear a slot; pins are stored per browser.
 
 ## Scripts
 

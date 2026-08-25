@@ -27,4 +27,14 @@
   --font: 'Press Start 2P', monospace;
   --stage-w: 480px;
   --stage-h: 270px;
+  --pixel-disc: polygon(
+    30% 0%,
+    70% 0%,
+    100% 30%,
+    100% 70%,
+    70% 100%,
+    30% 100%,
+    0% 70%,
+    0% 30%
+  );
 }

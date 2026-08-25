@@ -1,7 +1,8 @@
-import { useState, type CSSProperties } from 'react'
+import { useEffect, useState, type CSSProperties } from 'react'
 import { formatMs } from '../lib/time'
-import type { QueueTrack } from '../spotify/api'
+import type { PlaylistSummary, QueueTrack } from '../spotify/api'
 import type { NowPlaying } from '../spotify/useSpotifyPlayer'
+import { clearPin, loadPins, PIN_COUNT, setPin, type Pins } from './playlistPins'
 
 type Props = {
   authed: boolean
@@ -23,10 +24,12 @@ type Props = {
   onNext: () => void
   onSeek: (ms: number) => void
   onVolume: (v: number) => void
+  onLoadPlaylists: () => Promise<PlaylistSummary[]>
+  onPlayPlaylist: (uri: string) => Promise<void>
 }
 
 export function CrtMonitor(props: Props) {
-  const [tab, setTab] = useState<'now' | 'q'>('now')
+  const [tab, setTab] = useState<'now' | 'q' | 'pl'>('now')
   const duration = props.track?.durationMs ?? 0
   const progress = duration > 0 ? Math.min(1, props.positionMs / duration) : 0
 
@@ -61,6 +64,9 @@ export function CrtMonitor(props: Props) {
                     <button type="button" className={tab === 'q' ? 'is-on' : ''} onClick={() => setTab('q')}>
                       Q
                     </button>
+                    <button type="button" className={tab === 'pl' ? 'is-on' : ''} onClick={() => setTab('pl')}>
+                      PL
+                    </button>
                   </div>
                   {tab === 'now' ? (
                     <NowPlayingPane
@@ -70,8 +76,13 @@ export function CrtMonitor(props: Props) {
                       progress={progress}
                       onSeek={props.onSeek}
                     />
-                  ) : (
+                  ) : tab === 'q' ? (
                     <QueuePane queue={props.queue} />
+                  ) : (
+                    <PlaylistPane
+                      onLoadPlaylists={props.onLoadPlaylists}
+                      onPlayPlaylist={props.onPlayPlaylist}
+                    />
                   )}
                   <Transport
                     paused={props.paused}
@@ -158,6 +169,164 @@ function QueuePane({ queue }: { queue: QueueTrack[] }) {
         </li>
       ))}
     </ul>
+  )
+}
+
+function nextEmptySlot(pins: Pins, from: number): number {
+  for (let i = 0; i < PIN_COUNT; i += 1) {
+    const idx = (from + i) % PIN_COUNT
+    if (!pins[idx]) return idx
+  }
+  return from
+}
+
+function PlaylistPane({
+  onLoadPlaylists,
+  onPlayPlaylist,
+}: {
+  onLoadPlaylists: () => Promise<PlaylistSummary[]>
+  onPlayPlaylist: (uri: string) => Promise<void>
+}) {
+  const [pins, setPins] = useState<Pins>(loadPins)
+  const [editing, setEditing] = useState(false)
+  const [target, setTarget] = useState(0)
+  const [library, setLibrary] = useState<PlaylistSummary[] | null>(null)
+  const [status, setStatus] = useState<string | null>(null)
+  const [failed, setFailed] = useState(false)
+
+  useEffect(() => {
+    if (!editing || library) return
+    let live = true
+    onLoadPlaylists()
+      .then((items) => {
+        if (live) setLibrary(items)
+      })
+      .catch(() => {
+        if (!live) return
+        setStatus('PLAYLIST LOAD FAIL')
+        setFailed(true)
+      })
+    return () => {
+      live = false
+    }
+  }, [editing, library, onLoadPlaylists])
+
+  const play = (uri: string) => {
+    setStatus(null)
+    setFailed(false)
+    onPlayPlaylist(uri).catch(() => {
+      setStatus('PLAY FAILED')
+      setFailed(true)
+    })
+  }
+
+  if (!editing) {
+    return (
+      <div className="pl">
+        <div className="pl-head">
+          <span className="pl-head__label">PINS</span>
+          <button
+            type="button"
+            className="px-btn px-btn--tiny"
+            onClick={() => {
+              setStatus(null)
+              setFailed(false)
+              setTarget(nextEmptySlot(pins, 0))
+              setEditing(true)
+            }}
+          >
+            SET
+          </button>
+        </div>
+        <ul className="pl-slots">
+          {pins.map((pin, i) => (
+            <li key={i}>
+              <button
+                type="button"
+                className={`pl-slot ${pin ? '' : 'is-empty'}`}
+                disabled={!pin}
+                onClick={() => pin && play(pin.uri)}
+              >
+                <span className="pl-slot__num">{i + 1}</span>
+                <span className="pl-slot__name">{pin ? pin.name.toUpperCase() : '— EMPTY —'}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+        {status ? <p className={`crt-msg ${failed ? 'crt-msg--err' : ''}`}>{status}</p> : null}
+        <div className="pl-bar">
+          <button
+            type="button"
+            className="px-btn px-btn--tiny"
+            onClick={() => {
+              setStatus(null)
+              setFailed(false)
+              setTarget(nextEmptySlot(pins, 0))
+              setEditing(true)
+            }}
+          >
+            SET
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="pl">
+      <div className="pl-pick">
+        <span className="pl-pick__label">PICK {target + 1}/{PIN_COUNT}</span>
+        <div className="pl-pick__slots" role="group" aria-label="Pin slot">
+          {pins.map((pin, i) => (
+            <button
+              key={i}
+              type="button"
+              className={`pl-tick ${i === target ? 'is-on' : ''} ${pin ? 'is-set' : ''}`}
+              onClick={() => setTarget(i)}
+              aria-label={`Slot ${i + 1}`}
+            >
+              {i + 1}
+            </button>
+          ))}
+        </div>
+      </div>
+      {status ? (
+        <p className={`crt-msg ${failed ? 'crt-msg--err' : ''}`}>{status}</p>
+      ) : !library ? (
+        <p className="crt-msg">LOADING...</p>
+      ) : library.length === 0 ? (
+        <p className="crt-msg">NO PLAYLISTS</p>
+      ) : (
+        <ul className="pl-list">
+          {library.map((p) => (
+            <li key={p.id}>
+              <button
+                type="button"
+                onClick={() => {
+                  const updated = setPin(pins, target, p)
+                  setPins(updated)
+                  setTarget(nextEmptySlot(updated, target + 1))
+                }}
+              >
+                {p.name.toUpperCase()}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <div className="pl-bar">
+        <button
+          type="button"
+          className="px-btn px-btn--tiny"
+          onClick={() => setPins(clearPin(pins, target))}
+        >
+          CLR
+        </button>
+        <button type="button" className="px-btn px-btn--tiny px-btn--go" onClick={() => setEditing(false)}>
+          DONE
+        </button>
+      </div>
+    </div>
   )
 }
 

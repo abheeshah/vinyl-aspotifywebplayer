@@ -4,8 +4,11 @@ import {
   fetchAudioAnalysis,
   fetchQueue,
   fetchTopArtists,
+  fetchUserPlaylists,
+  playContext,
   transferPlayback,
   type AudioAnalysis,
+  type PlaylistSummary,
   type QueueTrack,
 } from './api'
 import { largestImageUrl, pixelateImage } from './pixelate'
@@ -44,6 +47,8 @@ export type PlayerModel = {
   previous: () => void
   seek: (ms: number) => void
   setVolume: (v: number) => void
+  loadPlaylists: () => Promise<PlaylistSummary[]>
+  playPlaylist: (uri: string) => Promise<void>
 }
 
 const EMPTY_SPEC = Array.from({ length: 16 }, () => 0.08)
@@ -77,6 +82,7 @@ function nearBeat(analysis: AudioAnalysis | null, posMs: number, paused: boolean
 export function useSpotifyPlayer(clientId: string | undefined, authed: boolean): PlayerModel {
   const playerRef = useRef<Spotify.Player | null>(null)
   const tokenRef = useRef<string | null>(null)
+  const deviceRef = useRef<string | null>(null)
   const posBase = useRef({ ms: 0, at: 0, paused: true })
   const analysisRef = useRef<AudioAnalysis | null>(null)
   const [ready, setReady] = useState(false)
@@ -88,9 +94,9 @@ export function useSpotifyPlayer(clientId: string | undefined, authed: boolean):
     return Number.isFinite(stored) && stored >= 0 ? stored : 0.7
   })
   const [track, setTrack] = useState<NowPlaying | null>(null)
-  const [pixelArt, setPixelArt] = useState<string | null>(null)
+  const [pixelArtEntry, setPixelArtEntry] = useState<{ url: string; data: string } | null>(null)
   const [queue, setQueue] = useState<QueueTrack[]>([])
-  const [topArtists, setTopArtists] = useState<PosterArtist[]>([])
+  const [artistPosters, setArtistPosters] = useState<PosterArtist[]>([])
   const [pulse, setPulse] = useState(false)
   const [spectrum, setSpectrum] = useState<number[]>(EMPTY_SPEC)
 
@@ -139,6 +145,7 @@ export function useSpotifyPlayer(clientId: string | undefined, authed: boolean):
         })
 
         player.addListener('ready', ({ device_id }) => {
+          deviceRef.current = device_id
           setReady(true)
           setError(null)
           void getToken().then((t) => {
@@ -146,7 +153,10 @@ export function useSpotifyPlayer(clientId: string | undefined, authed: boolean):
           })
         })
 
-        player.addListener('not_ready', () => setReady(false))
+        player.addListener('not_ready', () => {
+          deviceRef.current = null
+          setReady(false)
+        })
 
         player.addListener('player_state_changed', (state) => {
           if (!state) return
@@ -180,17 +190,15 @@ export function useSpotifyPlayer(clientId: string | undefined, authed: boolean):
   }, [authed, clientId, getToken])
 
   useEffect(() => {
-    if (!track?.artUrl) {
-      setPixelArt(null)
-      return
-    }
+    const url = track?.artUrl
+    if (!url) return
     let live = true
-    void pixelateImage(track.artUrl, 24)
+    void pixelateImage(url, 24)
       .then((data) => {
-        if (live) setPixelArt(data)
+        if (live) setPixelArtEntry({ url, data })
       })
       .catch(() => {
-        if (live) setPixelArt(track.artUrl)
+        if (live) setPixelArtEntry({ url, data: url })
       })
     return () => {
       live = false
@@ -222,10 +230,7 @@ export function useSpotifyPlayer(clientId: string | undefined, authed: boolean):
   }, [track?.id])
 
   useEffect(() => {
-    if (!authed || !clientId) {
-      setTopArtists([])
-      return
-    }
+    if (!authed || !clientId) return
     let live = true
     void getToken()
       .then(async (token) => {
@@ -244,10 +249,10 @@ export function useSpotifyPlayer(clientId: string | undefined, authed: boolean):
             return { id: a.id, name: a.name, pixelArt }
           }),
         )
-        if (live) setTopArtists(posters)
+        if (live) setArtistPosters(posters)
       })
       .catch(() => {
-        if (live) setTopArtists([])
+        if (live) setArtistPosters([])
       })
     return () => {
       live = false
@@ -285,6 +290,26 @@ export function useSpotifyPlayer(clientId: string | undefined, authed: boolean):
     void playerRef.current?.setVolume(clamped)
   }, [])
 
+  const loadPlaylists = useCallback(async () => {
+    const token = await getToken()
+    if (!token) return []
+    return fetchUserPlaylists(token)
+  }, [getToken])
+
+  const playPlaylist = useCallback(
+    async (uri: string) => {
+      const token = await getToken()
+      const deviceId = deviceRef.current
+      if (!token || !deviceId) throw new Error('DEVICE NOT READY')
+      await playContext(token, deviceId, uri)
+    },
+    [getToken],
+  )
+
+  // Keyed by art URL so a previous track's art never shows while the new one pixelates.
+  const pixelArt = pixelArtEntry && pixelArtEntry.url === track?.artUrl ? pixelArtEntry.data : null
+  const topArtists = authed && clientId ? artistPosters : []
+
   return {
     ready,
     error,
@@ -302,5 +327,7 @@ export function useSpotifyPlayer(clientId: string | undefined, authed: boolean):
     previous,
     seek,
     setVolume,
+    loadPlaylists,
+    playPlaylist,
   }
 }

@@ -22,46 +22,53 @@ export function formatAuthError(raw: string): string {
   }
 }
 
+type CallbackIntent =
+  | { kind: 'none' }
+  | { kind: 'error'; message: string }
+  | { kind: 'exchange'; clientId: string; code: string; verifier: string }
+
+let cachedIntent: CallbackIntent | null = null
+
+function readCallbackIntent(clientId: string | undefined): CallbackIntent {
+  if (window.location.pathname !== '/callback') return { kind: 'none' }
+  if (!clientId) return { kind: 'error', message: 'MISSING CLIENT ID' }
+
+  const params = new URLSearchParams(window.location.search)
+  const err = params.get('error')
+  if (err) return { kind: 'error', message: formatAuthError(err) }
+
+  const code = params.get('code')
+  const verifier = takeVerifier()
+  if (!code || !verifier) return { kind: 'error', message: 'LOGIN INCOMPLETE' }
+  return { kind: 'exchange', clientId, code, verifier }
+}
+
+/**
+ * The PKCE verifier is single-use, so the callback URL may only be read once per
+ * page load — StrictMode remounts and re-renders must reuse the same result.
+ */
+function callbackIntent(clientId: string | undefined): CallbackIntent {
+  cachedIntent ??= readCallbackIntent(clientId)
+  return cachedIntent
+}
+
 export function useAuth(clientId: string | undefined) {
+  const intent = callbackIntent(clientId)
   const [authed, setAuthed] = useState(() => Boolean(loadTokens()))
-  const [callbackError, setCallbackError] = useState<string | null>(null)
-  const [handlingCallback, setHandlingCallback] = useState(
-    () => window.location.pathname === '/callback',
+  const [callbackError, setCallbackError] = useState<string | null>(
+    intent.kind === 'error' ? intent.message : null,
   )
+  const [handlingCallback, setHandlingCallback] = useState(intent.kind === 'exchange')
 
   useEffect(() => {
-    if (window.location.pathname !== '/callback') return
-    if (!clientId) {
-      setCallbackError('MISSING CLIENT ID')
-      setHandlingCallback(false)
-      return
-    }
+    if (intent.kind === 'none') return
 
-    const params = new URLSearchParams(window.location.search)
-    const err = params.get('error')
-    const code = params.get('code')
-    const verifier = takeVerifier()
+    window.history.replaceState({}, '', '/')
+    if (intent.kind === 'error') return
 
-    const finish = () => {
-      window.history.replaceState({}, '', '/')
-      setHandlingCallback(false)
-    }
-
-    if (err) {
-      setCallbackError(formatAuthError(err))
-      finish()
-      return
-    }
-    if (!code || !verifier) {
-      setCallbackError('LOGIN INCOMPLETE')
-      finish()
-      return
-    }
-
-    void exchangeCode(clientId, code, verifier)
+    void exchangeCode(intent.clientId, intent.code, intent.verifier)
       .then(() => {
         setAuthed(true)
-        finish()
       })
       .catch((e: unknown) => {
         const msg = e instanceof Error ? e.message : ''
@@ -70,9 +77,11 @@ export function useAuth(clientId: string | undefined) {
         } else {
           setCallbackError('TOKEN EXCHANGE FAILED')
         }
-        finish()
       })
-  }, [clientId])
+      .finally(() => {
+        setHandlingCallback(false)
+      })
+  }, [intent])
 
   return { authed, callbackError, handlingCallback }
 }

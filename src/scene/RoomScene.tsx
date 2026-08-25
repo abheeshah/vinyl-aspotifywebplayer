@@ -1,13 +1,16 @@
 import { CrtMonitor } from '../crt/CrtMonitor'
 import { SpeakerPair } from '../speakers/SpeakerPair'
-import type { QueueTrack } from '../spotify/api'
+import type { PlaylistSummary, QueueTrack } from '../spotify/api'
 import type { NowPlaying, PosterArtist } from '../spotify/useSpotifyPlayer'
 import { Turntable } from '../turntable/Turntable'
 import { ArtistPosters } from './ArtistPosters'
+import { DeskLamp } from './DeskLamp'
 import { DustMotes } from './DustMotes'
+import { LeaningRecords } from './LeaningRecords'
 import { LightBeams } from './LightBeams'
 import { Mug } from './Mug'
 import { Plant } from './Plant'
+import { VinylCrate } from './VinylCrate'
 
 type Props = {
   scale: number
@@ -36,6 +39,8 @@ type Props = {
   onNext: () => void
   onSeek: (ms: number) => void
   onVolume: (v: number) => void
+  onLoadPlaylists: () => Promise<PlaylistSummary[]>
+  onPlayPlaylist: (uri: string) => Promise<void>
 }
 
 export function RoomScene(props: Props) {
@@ -50,12 +55,21 @@ export function RoomScene(props: Props) {
         <div className="brick" />
         <div className="window">
           <div className="window__sky" />
+          <div className="window__clouds" />
+          <div className="window__skyline" />
+          <div className="window__lit window__lit--a" />
+          <div className="window__lit window__lit--b" />
+          <div className="window__lit window__lit--c" />
           <div className="window__blinds" />
+          <div className="window__sill" />
         </div>
         {props.postersVisible ? <ArtistPosters artists={props.topArtists} /> : null}
+        <LeaningRecords />
         <LightBeams />
         <DustMotes quiet={quiet} />
         <div className="desk" />
+        <VinylCrate />
+        <DeskLamp />
         <Plant />
         <SpeakerPair pulse={props.pulse} />
         <CrtMonitor
@@ -78,6 +92,8 @@ export function RoomScene(props: Props) {
           onNext={props.onNext}
           onSeek={props.onSeek}
           onVolume={props.onVolume}
+          onLoadPlaylists={props.onLoadPlaylists}
+          onPlayPlaylist={props.onPlayPlaylist}
         />
         <Mug />
         <Turntable paused={props.paused} hasTrack={Boolean(props.track)} pixelArt={props.pixelArt} />

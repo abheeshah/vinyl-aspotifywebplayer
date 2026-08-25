@@ -1,6 +1,6 @@
 import { redirectUri } from './pkce'
 
-const STORE_KEY = 'vinyl_tokens_v2'
+const STORE_KEY = 'vinyl_tokens_v3'
 
 export type TokenSet = {
   access_token: string
