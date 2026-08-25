@@ -57,23 +57,24 @@ So friends can open the same app on `*.pages.dev`:
 1. In the Spotify Dashboard, add a second Redirect URI (keep the local one too):
 
    ```
-   https://vinyl.pages.dev/callback
+   https://vinyl-arh.pages.dev/callback
    ```
 
    If your Pages project name differs, use `https://<project>.pages.dev/callback` exactly.
 
 2. Allowlist each friend’s Spotify email under **Users Management** (max 5 including you). Everyone needs **Premium**.
 
-3. Deploy (Client ID is baked in at build time via `.env.local` or the shell):
+3. Log in to Cloudflare once, then deploy (Client ID is baked in at build time via `.env.local` or the shell):
 
    ```bash
+   bunx wrangler login
    # uses VITE_SPOTIFY_CLIENT_ID from .env.local if present
    bun run deploy
    ```
 
    Or: `VITE_SPOTIFY_CLIENT_ID=your_id bun run deploy`
 
-4. Share `https://vinyl.pages.dev`. Friends click **CONNECT** and approve scopes.
+4. Share [https://vinyl-arh.pages.dev](https://vinyl-arh.pages.dev). Friends click **CONNECT** and approve scopes.
 
    If the CRT shows **NOT ON ALLOWLIST**, add their email in the Spotify Dashboard and have them try again.
 
@@ -102,7 +103,7 @@ If you pull updates that add scopes (e.g. wall posters / `user-top-read`), click
 | `bun run build` | Typecheck and production build |
 | `bun run preview` | Preview the production build |
 | `bun run lint` | Run oxlint |
-| `bun run deploy` | Build and upload `dist/` to Cloudflare Pages (`vinyl`) |
+| `bun run deploy` | Build and upload `dist/` to Cloudflare Pages (`vinyl` → vinyl-arh.pages.dev) |
 
 ## Stack
 
