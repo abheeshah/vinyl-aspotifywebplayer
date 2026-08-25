@@ -1,0 +1,30 @@
+:root {
+  --amber-deep: #3a1608;
+  --amber: #c45c12;
+  --amber-hot: #f08a28;
+  --gold: #f4c45c;
+  --honey: #ffd080;
+  --cream: #f4e4c4;
+  --paper: #e8d4a8;
+  --slate: #2c3038;
+  --slate-hi: #4a5060;
+  --teal-wood: #3a2414;
+  --teak: #6a3a18;
+  --teak-hi: #8a5428;
+  --mahogany: #4a2210;
+  --brick: #8a3a22;
+  --brick-mortar: #5a2a18;
+  --forest: #1e5a28;
+  --leaf: #2e8a38;
+  --leaf-hi: #c8e06a;
+  --crt-beige: #c8b48c;
+  --crt-beige-dk: #8a7860;
+  --phosphor: #1a2018;
+  --play: #3cb43c;
+  --spec-g: #3ce03c;
+  --spec-y: #e8d02a;
+  --spec-o: #e07018;
+  --font: 'Press Start 2P', monospace;
+  --stage-w: 480px;
+  --stage-h: 270px;
+}
