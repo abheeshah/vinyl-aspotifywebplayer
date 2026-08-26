@@ -1786,6 +1786,7 @@ img {
 
 .pl {
   display: flex;
+  flex: 1;
   flex-direction: column;
   gap: 2px;
   min-height: 0;
@@ -1801,8 +1802,11 @@ img {
   color: #3a3428;
 }
 
+/* Header holds SET / CLR / DONE; only the lists below it scroll. */
+.pl-slots,
 .pl-list {
-  max-height: 42px;
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: #6a6048 #2a2418;
@@ -1843,21 +1847,34 @@ img {
   color: #5a5448;
 }
 
-.pl-pick {
+.pl-head {
   display: flex;
+  flex-shrink: 0;
   align-items: center;
-  gap: 3px;
+  gap: 2px;
 }
 
-.pl-pick__label {
+.pl-head__label {
   font-size: 4px;
   color: #5a5448;
 }
 
-.pl-pick__slots {
+.pl-head .px-btn {
+  margin-left: auto;
+}
+
+.pl-head .px-btn + .px-btn {
+  margin-left: 0;
+}
+
+.pl-ticks {
   display: flex;
   gap: 1px;
-  margin-left: auto;
+}
+
+.pl .crt-msg {
+  flex-shrink: 0;
+  margin: 2px;
 }
 
 .pl-tick {
@@ -1880,12 +1897,6 @@ img {
 .pl-tick.is-on {
   background: var(--slate);
   color: var(--cream);
-}
-
-.pl-bar {
-  display: flex;
-  gap: 2px;
-  margin-top: auto;
 }
 
 .px-btn--tiny {

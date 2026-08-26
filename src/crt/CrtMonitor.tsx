@@ -254,29 +254,14 @@ function PlaylistPane({
           ))}
         </ul>
         {status ? <p className={`crt-msg ${failed ? 'crt-msg--err' : ''}`}>{status}</p> : null}
-        <div className="pl-bar">
-          <button
-            type="button"
-            className="px-btn px-btn--tiny"
-            onClick={() => {
-              setStatus(null)
-              setFailed(false)
-              setTarget(nextEmptySlot(pins, 0))
-              setEditing(true)
-            }}
-          >
-            SET
-          </button>
-        </div>
       </div>
     )
   }
 
   return (
     <div className="pl">
-      <div className="pl-pick">
-        <span className="pl-pick__label">PICK {target + 1}/{PIN_COUNT}</span>
-        <div className="pl-pick__slots" role="group" aria-label="Pin slot">
+      <div className="pl-head">
+        <div className="pl-ticks" role="group" aria-label="Pin slot">
           {pins.map((pin, i) => (
             <button
               key={i}
@@ -289,6 +274,16 @@ function PlaylistPane({
             </button>
           ))}
         </div>
+        <button
+          type="button"
+          className="px-btn px-btn--tiny"
+          onClick={() => setPins(clearPin(pins, target))}
+        >
+          CLR
+        </button>
+        <button type="button" className="px-btn px-btn--tiny px-btn--go" onClick={() => setEditing(false)}>
+          DONE
+        </button>
       </div>
       {status ? (
         <p className={`crt-msg ${failed ? 'crt-msg--err' : ''}`}>{status}</p>
@@ -314,18 +309,6 @@ function PlaylistPane({
           ))}
         </ul>
       )}
-      <div className="pl-bar">
-        <button
-          type="button"
-          className="px-btn px-btn--tiny"
-          onClick={() => setPins(clearPin(pins, target))}
-        >
-          CLR
-        </button>
-        <button type="button" className="px-btn px-btn--tiny px-btn--go" onClick={() => setEditing(false)}>
-          DONE
-        </button>
-      </div>
     </div>
   )
 }
