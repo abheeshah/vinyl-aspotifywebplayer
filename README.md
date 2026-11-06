@@ -13,6 +13,8 @@ Fullscreen 8-bit listening room for Spotify Premium — a beige CRT, a teak turn
 - Keyboard + on-screen controls; `F` for fullscreen, `P` / **PS** to hide wall posters
 - Spotify Authorization Code + PKCE — no client secret, tokens stay in the browser
 
+<img width="1587" height="884" alt="Screenshot 2026-11-05 at 7 09 49 PM" src="https://github.com/user-attachments/assets/3fedc0f8-de2d-4b4e-844f-519645905afd" />
+
 ## Prerequisites
 
 - [Bun](https://bun.sh)
